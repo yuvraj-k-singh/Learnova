@@ -612,7 +612,7 @@ export function Navbar() {
           }
         }
         .animate-fadeIn {
-          animation: fadeIn 0.3s ease-out;
+          animation: fadeIn 0.2s ease-out;
         }
 
         @keyframes slideInRight {
@@ -624,7 +624,7 @@ export function Navbar() {
           }
         }
         .animate-slideInRight {
-          animation: slideInRight 0.3s ease-out;
+          animation: slideInRight 0.2s ease-out;
         }
 
         @keyframes slideInFromTop {
@@ -643,22 +643,22 @@ export function Navbar() {
 
         /* Animation delay classes */
         .animate-fadeIn-0 {
-          animation: fadeIn 0.3s ease-out 0ms both;
+          animation: fadeIn 0.2s ease-out 0ms both;
         }
         .animate-fadeIn-1 {
-          animation: fadeIn 0.3s ease-out 100ms both;
+          animation: fadeIn 0.2s ease-out 100ms both;
         }
         .animate-fadeIn-2 {
-          animation: fadeIn 0.3s ease-out 200ms both;
+          animation: fadeIn 0.2s ease-out 200ms both;
         }
         .animate-fadeIn-delay-0 {
-          animation: fadeIn 0.3s ease-out 0ms both;
+          animation: fadeIn 0.2s ease-out 0ms both;
         }
         .animate-fadeIn-delay-1 {
-          animation: fadeIn 0.3s ease-out 50ms both;
+          animation: fadeIn 0.2s ease-out 50ms both;
         }
         .animate-fadeIn-delay-2 {
-          animation: fadeIn 0.3s ease-out 100ms both;
+          animation: fadeIn 0.2s ease-out 100ms both;
         }
       `}</style>
     </>
