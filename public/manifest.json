@@ -3,7 +3,7 @@
   "short_name": "Learnova",
   "description": "AI-powered student engagement platform with smart attendance tracking, classroom management, and analytics",
   "start_url": "/",
- "theme_color": "#cab1b1",
+  "theme_color": "#cab1b1",
   "background_color": "#c6afaf",
   "display": "standalone",
   "orientation": "portrait-primary",
@@ -12,13 +12,13 @@
   "categories": ["education", "productivity"],
   "icons": [
     {
-      "src": "/web-app-manifest-192x192.png",
-      "sizes": "192x192",
+      "src": "/icons/icon1.png",
+      "sizes": "96x96",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/web-app-manifest-512x512.png",
+      "src": "/icons/logo-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
