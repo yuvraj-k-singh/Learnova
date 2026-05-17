@@ -17,119 +17,143 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Fetch contributors from GitHub API
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          curl -s \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/Premshaw23/Learnova/contributors?per_page=100" \
-            -o /tmp/raw.json
-
-          # Bail out if the API returned an error object instead of an array
-          if python3 -c "import json,sys; d=json.load(open('/tmp/raw.json')); sys.exit(0 if isinstance(d,list) else 1)"; then
-            echo "API returned a valid contributors list"
-          else
-            echo "API error: $(cat /tmp/raw.json)"
-            exit 1
-          fi
-
-      - name: Rebuild contributors.json and README section
+      - name: Sync contributors
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python3 << 'PYEOF'
-import json, os, re, urllib.request
+import json, os, re, sys, urllib.request, urllib.error
 
-token = os.environ.get("GH_TOKEN", "")
-API_HEADERS = {
-    "Authorization": f"Bearer {token}",
+TOKEN = os.environ.get("GH_TOKEN", "")
+REPO  = "Premshaw23/Learnova"
+HEADERS = {
+    "Authorization": f"Bearer {TOKEN}",
     "Accept": "application/vnd.github.v3+json",
     "User-Agent": "learnova-contributor-sync",
 }
 
+def gh_get(url):
+    req = urllib.request.Request(url, headers=HEADERS)
+    with urllib.request.urlopen(req) as r:
+        data = json.loads(r.read())
+    # GitHub returns a dict with "message" on errors (rate-limit, bad token, etc.)
+    if isinstance(data, dict) and "message" in data:
+        raise RuntimeError(f"GitHub API error: {data['message']}  url={url}")
+    return data
+
 def is_human(login):
-    """Return True only for real User accounts — filters bots, apps, orgs."""
+    """True only for real User accounts — skips Bots, Apps, Organizations."""
     try:
-        req = urllib.request.Request(
-            f"https://api.github.com/users/{login}",
-            headers=API_HEADERS,
-        )
-        with urllib.request.urlopen(req) as resp:
-            return json.loads(resp.read()).get("type") == "User"
+        t = gh_get(f"https://api.github.com/users/{login}").get("type", "User")
+        if t != "User":
+            print(f"  skip {login!r} (type={t})")
+            return False
+        return True
     except Exception as e:
-        print(f"  type-check failed for {login}: {e} — including anyway")
-        return True  # on API error, include the user to be safe
+        # On any API failure include the user — safer than silently dropping them
+        print(f"  type-check failed for {login!r}: {e} — including anyway")
+        return True
 
-with open("/tmp/raw.json") as f:
-    raw = json.load(f)
+# ── 1. Paginate through every contributor page ───────────────────────────
+# GitHub's hard max is 100 per page.  We loop until a page returns fewer
+# than 100 entries, which means it was the last page.
+# Edge case — exactly 100 contributors: page 1 returns 100 (full), we fetch
+# page 2 which returns 0 (< 100) and we stop.  All 100 are included. ✓
 
-# ── Build contributors list ──────────────────────────────────────────────
+print("Fetching contributors (paginated)...")
+raw   = []
+page  = 1
+while True:
+    url = (
+        f"https://api.github.com/repos/{REPO}/contributors"
+        f"?per_page=100&page={page}&anon=false"
+    )
+    page_data = gh_get(url)
+    raw.extend(page_data)
+    print(f"  page {page}: {len(page_data)} entries  (running total: {len(raw)})")
+    if len(page_data) < 100:
+        break   # reached the last page
+    page += 1
+
+print(f"API total: {len(raw)} entries across {page} page(s)")
+
+# ── 2. Filter and build the result list ─────────────────────────────────
 admin_contributions = 0
 others = []
 
 for c in raw:
     login = c.get("login", "")
     count = c.get("contributions", 0)
-    if "[bot]" in login.lower():
+
+    if "[bot]" in login.lower():        # catch vercel[bot], github-actions[bot] …
+        print(f"  skip {login!r} ([bot] suffix)")
         continue
-    if not is_human(login):
-        print(f"Skipping {login} (non-User account)")
+
+    if not is_human(login):             # catch Copilot, apps, org accounts …
         continue
+
     if login.lower() == "premshaw23":
         admin_contributions = count
     else:
         others.append({"username": login, "contributions": count})
 
+# Admin entry is always first; contributions = 0 if they haven't committed yet
 result = [
-    {"username": "Premshaw23", "name": "Prem Shaw", "admin": True, "contributions": admin_contributions}
-] + others  # API returns sorted by contributions desc
+    {
+        "username": "Premshaw23",
+        "name":     "Prem Shaw",
+        "admin":    True,
+        "contributions": admin_contributions,
+    }
+] + others   # rest already sorted desc by the API
 
+print(f"Result: {len(result)} human contributors ({len(others)} + 1 admin)")
+
+# ── 3. Write data/contributors.json ─────────────────────────────────────
 with open("data/contributors.json", "w") as f:
     json.dump(result, f, indent=2)
     f.write("\n")
+print("Wrote data/contributors.json")
 
-print(f"contributors.json: {len(result)} entries")
-
-# ── Rebuild README contributors table (5 columns) ────────────────────────
-COLS = 5
-GH = "https://github.com"
-
-def cell(c):
-    u = c["username"]
-    label = f'**{c["name"]}**' if c.get("admin") else f"@{u}"
-    img = f'<a href="{GH}/{u}"><img src="{GH}/{u}.png?size=60" width="52" height="52" alt="{u}"/></a>'
-    return f"{img}<br>{label}"
-
-chunks = [result[i:i+COLS] for i in range(0, len(result), COLS)]
-
-# First chunk becomes the header row; all chunks after are data rows
-rows = []
-for idx, chunk in enumerate(chunks):
-    cells = [cell(c) for c in chunk]
-    cells += [""] * (COLS - len(cells))          # pad last row
-    rows.append("| " + " | ".join(cells) + " |")
-    if idx == 0:
-        rows.append("| " + " | ".join([":---:"] * COLS) + " |")
-
-table = "\n".join(rows)
-block = f"<!-- CONTRIBUTORS:START -->\n{table}\n<!-- CONTRIBUTORS:END -->"
+# ── 4. Rebuild README contributors table ─────────────────────────────────
+START = "<!-- CONTRIBUTORS:START -->"
+END   = "<!-- CONTRIBUTORS:END -->"
+COLS  = 5
+GH    = "https://github.com"
 
 with open("README.md", "r", encoding="utf-8") as f:
     readme = f.read()
 
-updated = re.sub(
-    r"<!-- CONTRIBUTORS:START -->.*?<!-- CONTRIBUTORS:END -->",
-    block,
-    readme,
-    flags=re.DOTALL,
-)
+if START not in readme or END not in readme:
+    print("WARNING: README.md markers not found — skipping README update")
+    sys.exit(0)
+
+def make_cell(c):
+    u     = c["username"]
+    label = f'**{c["name"]}**' if c.get("admin") else f"@{u}"
+    img   = (f'<a href="{GH}/{u}">'
+             f'<img src="{GH}/{u}.png?size=60" width="52" height="52" alt="{u}"/>'
+             f'</a>')
+    return f"{img}<br>{label}"
+
+chunks = [result[i : i + COLS] for i in range(0, len(result), COLS)]
+rows   = []
+for idx, chunk in enumerate(chunks):
+    cells = [make_cell(c) for c in chunk]
+    cells += [""] * (COLS - len(cells))   # pad last row to full width
+    rows.append("| " + " | ".join(cells) + " |")
+    if idx == 0:
+        rows.append("| " + " | ".join([":---:"] * COLS) + " |")
+
+block   = f"{START}\n" + "\n".join(rows) + f"\n{END}"
+pattern = re.escape(START) + r".*?" + re.escape(END)
+
+# Use a lambda so backslashes in `block` are never treated as regex escapes
+updated = re.sub(pattern, lambda _: block, readme, flags=re.DOTALL)
 
 with open("README.md", "w", encoding="utf-8") as f:
     f.write(updated)
-
-print("README.md contributors section updated")
+print("Updated README.md contributors section")
 PYEOF
 
       - name: Commit if changed
