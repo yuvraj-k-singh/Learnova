@@ -1,6 +1,6 @@
 import { POST } from "@/app/api/register/route";
 import { connectDb } from "@/lib/mongodb";
-import { put } from "@vercel/blob";
+import { put, del } from "@vercel/blob";
 
 jest.mock("next/server", () => ({
   NextResponse: {
@@ -16,6 +16,7 @@ jest.mock("next/server", () => ({
 
 jest.mock("@vercel/blob", () => ({
   put: jest.fn(),
+  del: jest.fn(),
 }));
 
 jest.mock("@/lib/mongodb", () => ({
@@ -97,5 +98,25 @@ describe("POST /api/register - Email Validation Security Tests", () => {
     expect(body.error).toBe("Invalid email address");
     expect(mockInsertOne).not.toHaveBeenCalled();
     expect(connectDb).not.toHaveBeenCalled(); // Validation must happen before DB connection or insertion
+  });
+
+  test("deletes uploaded blob if database insertion fails (rollback)", async () => {
+    mockFindOne.mockResolvedValue(null);
+    mockInsertOne.mockRejectedValue(new Error("Database write failed"));
+
+    const req = createMockRequest({
+      name: "John Doe",
+      rollNo: "123456",
+      email: "user@domain.com",
+      photo: mockFile,
+    });
+
+    const response = await POST(req);
+    const body = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(body.error).toBe("Database write failed");
+    expect(put).toHaveBeenCalled();
+    expect(del).toHaveBeenCalledWith("https://example.com/blob.jpg");
   });
 });

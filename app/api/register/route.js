@@ -1,4 +1,4 @@
-import { put } from "@vercel/blob";
+import { put, del } from "@vercel/blob";
 import { randomUUID } from "crypto";
 import { connectDb } from "@/lib/mongodb";
 import { jsonError, jsonSuccess } from "@/lib/api-response";
@@ -77,22 +77,31 @@ export async function POST(req) {
       access: "public",
     });
 
-    // Save user record in DB
-    const user = {
-      name,
-      rollNo,
-      email,
-      image: blob.url,
-    };
-    await users.insertOne(user);
+    try {
+      // Save user record in DB
+      const user = {
+        name,
+        rollNo,
+        email,
+        image: blob.url,
+      };
+      await users.insertOne(user);
 
-    return jsonSuccess(
-      {
-        message: "User registered successfully",
-        user,
-      },
-      201,
-    );
+      return jsonSuccess(
+        {
+          message: "User registered successfully",
+          user,
+        },
+        201,
+      );
+    } catch (dbError) {
+      try {
+        await del(blob.url);
+      } catch (cleanupError) {
+        console.error("Failed to delete orphaned blob during rollback:", cleanupError);
+      }
+      throw dbError;
+    }
   } catch (error) {
     console.error(error);
     return jsonError(error.message || "Internal server error", 500);
