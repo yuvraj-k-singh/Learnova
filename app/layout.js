@@ -15,7 +15,6 @@ import Footer from "@/components/Footer";
 import PageTransition from "@/components/PageTransition";
 import ScrollToTop from "@/components/ScrollToTop";
 import BackToTop from "@/components/BackToTop";
-import CursorGlow from "@/components/CursorGlow";
 import OfflineIndicator from "@/components/OfflineIndicator";
 
 const geistSans = Geist({
@@ -237,8 +236,7 @@ export default function RootLayout({ children }) {
       <body
         className={`font-sans ${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground min-h-screen transition-colors duration-300`}
       >
-          <CursorGlow />
-          <div id="cursor-glow"></div>
+          {/* Cursor glow removed per UX preference */}
           
         <ThemeProvider>
           <AuthProvider>
