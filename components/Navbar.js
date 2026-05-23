@@ -1,5 +1,4 @@
 "use client";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -267,7 +266,7 @@ export function Navbar() {
                     className={`px-4 py-2 rounded-lg transition-all duration-300 ${
                       isActive
                         ? "bg-accent/20 text-gray-950 dark:text-white font-medium"
-                        : "text-gray-700 dark:text-gray-200 hover:text-gray-950 dark:hover:text-white hover:bg-accent/10"
+                        : "text-gray-800 dark:text-gray-100 hover:text-gray-950 dark:hover:text-white hover:bg-accent/10"
                     }`}
                   >
                     {item.label}
@@ -279,7 +278,8 @@ export function Navbar() {
               {mounted && (
                 <button
                   onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                  className="p-2 rounded-xl text-gray-800 dark:text-gray-100 hover:text-gray-950 dark:hover:text-white hover:bg-accent/10 transition-all duration-300"
+                  className="p-2 rounded-xl text-gray-800 dark:text-gray-100 hover:text-gray-950 dark:hover:text-white hover:bg-accent/10 transition-all duration-300 cursor-pointer"
+                  aria-label="Toggle theme"
                 >
                   {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 </button>
@@ -312,7 +312,8 @@ export function Navbar() {
                   <div className="relative">
                     <button
                       onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                      className="relative p-2 rounded-xl text-gray-800 dark:text-gray-100 hover:text-gray-950 dark:hover:text-white hover:bg-accent/10 transition-all duration-300"
+                      className="relative p-2 rounded-xl text-gray-800 dark:text-gray-100 hover:text-gray-950 dark:hover:text-white hover:bg-accent/10 transition-all duration-300 cursor-pointer"
+                      aria-label="View notifications"
                     >
                       <Bell className="h-5 w-5" />
                       {unreadCount > 0 && (
@@ -498,7 +499,7 @@ export function Navbar() {
                       {getUserPhoto() && (
                         <Image
                           src={getUserPhoto()}
-                          alt="Profile"
+                          alt="User profile avatar"
                           width={56}
                           height={56}
                           className="rounded-full border-2 border-accent/50 object-cover shadow-lg"
