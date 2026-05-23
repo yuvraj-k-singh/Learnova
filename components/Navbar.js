@@ -341,7 +341,10 @@ export function Navbar() {
                   <div className="relative" ref={dropdownRef}>
                     <button
                       onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                      className="flex items-center space-x-3 p-2 rounded-xl text-gray-900 dark:text-gray-50 hover:text-gray-950 dark:hover:text-white hover:bg-accent/10 transition-all duration-300"
+                      className="flex items-center space-x-3 p-2 rounded-xl text-gray-800 dark:text-gray-100 hover:text-gray-950 dark:hover:text-white hover:bg-accent/10 transition-all duration-300"
+                      aria-label="User profile menu"
+                      aria-haspopup="true"
+                      aria-expanded={isDropdownOpen}
                     >
                       <div className="relative w-10 h-10">
                         {getUserPhoto() ? (
