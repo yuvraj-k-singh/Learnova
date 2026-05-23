@@ -1,3 +1,4 @@
+import { toast } from "react-hot-toast";
 import React, { useState, useEffect } from "react";
 import { Navbar } from "./Navbar";
 import Image from "next/image";
@@ -419,7 +420,7 @@ const TeacherDashboard = () => {
         ),
       );
     } catch (error) {
-      alert("Failed to update request. Please try again.");
+      toast.error("Failed to update request. Please try again.");
     }
   };
 
