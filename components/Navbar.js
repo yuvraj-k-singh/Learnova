@@ -197,6 +197,7 @@ export function Navbar() {
     { href: "/", label: "Home", icon: Home },
     { href: "/productivity", label: "Focus", icon: Sparkles },
     { href: "/activity", label: "Activities", icon: Activity },
+    { href: "/complaints", label: "Complaints", icon: Mail },
     { href: "/contact", label: "Contact", icon: Mail },
   ];
 
