@@ -1,9 +1,9 @@
 "use client";
 import { useTheme } from "next-themes";
 import { translations } from "@/constants/translations";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Navbar } from "@/components/Navbar";
-import { motion } from "framer-motion";
+import { motion, useMotionValue, useTransform, animate, useInView } from "framer-motion";
 import SplitText from "@/components/ui-block/SplitText";
 import DarkVeil from "@/components/ui-block/DarkVeil";
 import {
@@ -42,13 +42,6 @@ const PARTICLES_DATA = [
   { id: 3, left: 80, top: 20, delay: 4, duration: 14 },
   { id: 4, left: 30, top: 70, delay: 6, duration: 11 },
   { id: 5, left: 90, top: 50, delay: 8, duration: 13 },
-];
-
-const STATS_DATA = [
-  { number: "10,000+", label: "Institution Partnerships", icon: BookOpen },
-  { number: "5M+", label: "Student Tracking", icon: Users },
-  { number: "70%", label: "Time Saved", icon: TrendingUp },
-  { number: "98%", label: "Accuracy Rate", icon: Award },
 ];
 
 const VALUES_DATA = [
@@ -211,25 +204,46 @@ const ActionButton = ({
   );
 };
 
-// Reusable premium window mockup component for the graphic elements
 const MockupWindow = ({ children, gradientFrom }) => (
   <div className="relative group p-1 bg-white/5 rounded-3xl border border-white/10 backdrop-blur-md overflow-hidden shadow-2xl transition-all duration-500 hover:border-white/20">
-    {/* Dynamic Background Spotlight Radial Overlay on Card Hover */}
     <div className={`absolute inset-0 bg-gradient-to-tr ${gradientFrom} to-transparent opacity-10 group-hover:opacity-30 transition-opacity duration-700 pointer-events-none`} />
     
-    {/* Simulated App Header UI Bar */}
     <div className="flex items-center gap-1.5 px-5 py-3.5 border-b border-white/5 bg-black/20">
       <div className="w-2.5 h-2.5 rounded-full bg-rose-500/60" />
       <div className="w-2.5 h-2.5 rounded-full bg-amber-500/60" />
       <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/60" />
     </div>
 
-    {/* Showcase Core Work Area */}
     <div className="p-8 bg-black/40 flex items-center justify-center min-h-[220px]">
       {children}
     </div>
   </div>
 );
+
+// High-fidelity counting metrics component
+function AnimatedCounter({ from = 0, to, suffix }) {
+  const nodeRef = useRef(null);
+  const inView = useInView(nodeRef, { once: true, margin: "-100px" });
+  const count = useMotionValue(from);
+  const rounded = useTransform(count, (latest) => Math.floor(latest).toLocaleString());
+
+  useEffect(() => {
+    if (inView) {
+      const controls = animate(count, to, {
+        duration: 2.2,
+        ease: [0.16, 1, 0.3, 1],
+      });
+      return controls.stop;
+    }
+  }, [inView, count, to]);
+
+  return (
+    <span ref={nodeRef} aria-live="polite">
+      <motion.span>{rounded}</motion.span>
+      {suffix}
+    </span>
+  );
+}
 
 export default function AboutPage() {
   const { theme } = useTheme();
@@ -239,8 +253,10 @@ export default function AboutPage() {
   const isDark = mounted ? theme === "dark" : true;
   const [scrollY, setScrollY] = useState(0);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  
+  // Track active infographic orbital index layer
+  const [hoveredRing, setHoveredRing] = useState(null);
 
-  // Memoized mouse tracking with throttling
   const handleMouseMove = useCallback((e) => {
     setMousePosition({ x: e.clientX, y: e.clientY });
   }, []);
@@ -249,11 +265,9 @@ export default function AboutPage() {
     setScrollY(window.scrollY);
   }, []);
 
-  const handleAnimationComplete = useCallback(() => {
-  }, []);
+  const handleAnimationComplete = useCallback(() => {}, []);
 
   useEffect(() => {
-    // Throttled event listeners
     let scrollTimeout;
     let mouseTimeout;
 
@@ -262,7 +276,7 @@ export default function AboutPage() {
         scrollTimeout = setTimeout(() => {
           handleScroll();
           scrollTimeout = null;
-        }, 16); // ~60fps
+        }, 16);
       }
     };
 
@@ -271,7 +285,7 @@ export default function AboutPage() {
         mouseTimeout = setTimeout(() => {
           handleMouseMove(e);
           mouseTimeout = null;
-        }, 32); // ~30fps
+        }, 32);
       }
     };
 
@@ -292,7 +306,6 @@ export default function AboutPage() {
     }
   }, []);
 
-  // Memoized style calculations
   const mouseOrbStyle = useMemo(
     () => ({
       left: mousePosition.x - 192,
@@ -309,19 +322,23 @@ export default function AboutPage() {
     [scrollY]
   );
 
+  const STATS_ITEMS = [
+    { id: 0, number: 10000, suffix: "+", label: "Institution Partnerships", href: "/case-studies/partnerships" },
+    { id: 1, number: 5, suffix: "M+", label: "Student Tracking", href: "/case-studies/impact" },
+    { id: 2, number: 70, suffix: "%", label: "Time Saved" },
+    { id: 3, number: 98, suffix: "%", label: "Accuracy Rate" },
+  ];
+
   return (
     <>
-      {/* Background Effects */}
       <div className="fixed inset-0 -z-10 bg-background">
         {isDark && <DarkVeil />}
 
-        {/* Mouse-following gradient orb */}
         <div
           className="absolute w-96 h-96 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-full blur-3xl"
           style={mouseOrbStyle}
         />
 
-        {/* Floating particles */}
         <div className="absolute inset-0 overflow-hidden">
           {PARTICLES_DATA.map((particle) => (
             <div
@@ -411,13 +428,12 @@ export default function AboutPage() {
           </a>
         </div>
 
-        {/* Mission Section (Premium App-Frame Design Showcase) */}
+        {/* Mission Section */}
         <section
           id="mission"
           className="py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
-          >
+        >
           <div className="max-w-6xl mx-auto">
-            {/* Minimal High-End Intro Header */}
             <Reveal className="mb-24 max-w-2xl">
               <SectionBadge icon={Sparkles} text={translations[language].mission} />
               <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white mt-4 mb-6">
@@ -428,7 +444,6 @@ export default function AboutPage() {
               </p>
             </Reveal>
 
-            {/* Alternating Feature Layout Blocks */}
             <div className="space-y-32">
               {/* Block 1: Teachers */}
               <div className="grid lg:grid-cols-12 gap-12 lg:gap-20 items-center">
@@ -449,7 +464,6 @@ export default function AboutPage() {
                 <Reveal className="lg:col-span-5" delay={0.1}>
                   <MockupWindow gradientFrom="from-purple-500/20">
                     <div className="relative flex items-center justify-center">
-                      {/* Decorative ambient background rings inside window */}
                       <div className="absolute w-32 h-32 rounded-full border border-purple-500/10 animate-ping [animation-duration:4s]" />
                       <div className="absolute w-24 h-24 rounded-full border border-purple-500/20" />
                       <User className="w-16 h-16 text-purple-400/50 group-hover:scale-110 group-hover:text-purple-400 transition-all duration-500 relative z-10" />
@@ -458,7 +472,7 @@ export default function AboutPage() {
                 </Reveal>
               </div>
 
-              {/* Block 2: Students (Flipped Layout) */}
+              {/* Block 2: Students */}
               <div className="grid lg:grid-cols-12 gap-12 lg:gap-20 items-center">
                 <Reveal className="lg:col-span-5 lg:order-2 space-y-6">
                   <div className="flex items-center gap-3">
@@ -498,7 +512,7 @@ export default function AboutPage() {
                     For Institutions: Thrive via Connected Insights
                   </h3>
                   <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
-                    Say goodbye to siloed dashboards and broken communication channels. Our system structures an environment where unified indexes deliver deep transparency, protecting data accurately across every department level.
+                    Say goodbye to siloed dashboards and broken communication channels. Our system structures an environment where unified insights deliver deep transparency, protecting data accurately across every department level.
                   </p>
                 </Reveal>
                 <Reveal className="lg:col-span-5" delay={0.1}>
@@ -513,7 +527,6 @@ export default function AboutPage() {
               </div>
             </div>
 
-            {/* Premium Multi-Link Ecosystem Action Row */}
             <Reveal className="mt-24 pt-12 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6">
               <p className="text-sm text-muted-foreground max-w-sm text-center sm:text-left">
                 Ready to review our technical system features? Jump directly into the activity center.
@@ -721,56 +734,132 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* Stats Section */}
+        {/* Premium Infographic Concentric Rings Stats Section */}
         <section
           id="stats"
-          className="py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
+          className="py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-accent/10 via-purple-500/10 to-pink-500/10 backdrop-blur-3xl">
-            <div
-              className="absolute inset-0 opacity-30"
-              style={{
-                backgroundImage: `radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.2) 0%, transparent 70%), radial-gradient(circle at 80% 20%, rgba(236, 72, 153, 0.2) 0%, transparent 70%)`,
-              }}
-            />
-          </div>
-
           <div className="max-w-7xl mx-auto relative">
-            <Reveal className="text-center mb-20">
-              <SectionBadge
-                icon={TrendingUp}
-                text="Our Impact"
-                gradient="from-purple-500/10 to-pink-500/10 dark:from-white/10 dark:to-white/10"
-                borderClass="border-purple-200/50 dark:border-white/20"
-                iconClass="text-purple-600 dark:text-white"
-                textClass="text-purple-700 dark:text-white"
-              />
+            <div className="grid lg:grid-cols-12 gap-16 items-center">
+              
+              {/* Left Side Static Content Blocks */}
+              <div className="lg:col-span-5 flex flex-col items-start">
+                <SectionBadge
+                  icon={TrendingUp}
+                  text={translations[language].impact}
+                  gradient="from-purple-500/10 to-pink-500/10"
+                  borderClass="border-purple-500/20"
+                  iconClass="text-purple-400"
+                  textClass="text-purple-400"
+                />
 
-              <h2 className="text-4xl md:text-5xl font-bold text-black dark:text-white mb-6">
-                Transforming Education Globally
-              </h2>
-              <p className="text-xl text-black dark:text-white/80 max-w-3xl mx-auto">
-                Measurable results that demonstrate our commitment to
-                educational excellence and institutional success.
-              </p>
-            </Reveal>
+                <h2 className="text-4xl md:text-5xl font-black tracking-tight text-black dark:text-white mb-6">
+                  Transforming Education Globally
+                </h2>
+                <p className="text-lg text-muted-foreground leading-relaxed mb-10">
+                  Hover over our verification categories to examine how specific metrics map live into Learnova's global data orbit layers.
+                </p>
 
-            <div className="grid md:grid-cols-4 gap-8">
-              {STATS_DATA.map((stat, index) => (
-                <Reveal key={stat.label} delay={index * 0.08}>
-                  <div className="group text-center">
-                    <div className="h-full bg-white/50 dark:bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-purple-100 dark:border-white/20 hover:border-accent/40 transition-all duration-700 hover:scale-[1.02] hover:shadow-2xl shadow-sm dark:shadow-none">
-                      <stat.icon className="w-12 h-12 text-accent mx-auto mb-6 group-hover:scale-110 transition-transform duration-500" />
-                      <div className="text-4xl md:text-5xl font-bold text-black dark:text-white mb-3 group-hover:text-accent transition-colors duration-500">
-                        {stat.number}
-                      </div>
-                      <p className="text-black dark:text-white/80 font-medium text-lg group-hover:text-black dark:group-hover:text-white transition-colors duration-500">
-                        {stat.label}
-                      </p>
-                    </div>
+                {/* Vertical Interlocking Row Anchors */}
+                <div className="w-full space-y-4">
+                  {STATS_ITEMS.map((stat) => {
+                    const isClickable = !!stat.href;
+                    const ItemWrapper = isClickable ? Link : "div";
+
+                    return (
+                      <ItemWrapper
+                        key={stat.id}
+                        href={stat.href || ""}
+                        onMouseEnter={() => setHoveredRing(stat.id)}
+                        onMouseLeave={() => setHoveredRing(null)}
+                        className={`block p-5 border rounded-2xl transition-all duration-500 ${
+                          hoveredRing === stat.id 
+                            ? "border-purple-500/40 bg-purple-500/5 -translate-x-1" 
+                            : "border-zinc-200 dark:border-white/5 bg-transparent"
+                        } ${isClickable ? "cursor-pointer" : "cursor-default"}`}
+                      >
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <div className="text-2xl font-black text-black dark:text-white transition-colors duration-300 group-hover:text-purple-400">
+                              <AnimatedCounter to={stat.number} suffix={stat.suffix} />
+                            </div>
+                            <p className="text-sm font-semibold text-zinc-400 dark:text-zinc-500 mt-0.5">{stat.label}</p>
+                          </div>
+                          {isClickable && (
+                            <ArrowRight className={`w-4 h-4 text-purple-400 transition-transform duration-500 ${
+                              hoveredRing === stat.id ? "translate-x-1" : ""
+                            }`} />
+                          )}
+                        </div>
+                      </ItemWrapper>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Right Side Complex Interlocking Orbital Rings Showcase */}
+              <div className="lg:col-span-7 flex items-center justify-center min-h-[450px] md:min-h-[550px] relative pointer-events-none">
+                <div className="relative w-[380px] h-[380px] md:w-[480px] md:h-[480px] flex items-center justify-center">
+                  
+                  {/* Central Glow Core */}
+                  <div className="absolute w-12 h-12 bg-purple-500/20 dark:bg-purple-500/10 rounded-full blur-xl animate-pulse" />
+                  <div className="absolute w-4 h-4 bg-purple-500 rounded-full border-2 border-white shadow-[0_0_20px_rgba(168,85,247,0.8)]" />
+
+                  {/* Ring Layer 0: Institution Partnerships */}
+                  <div 
+                    className={`absolute rounded-full border transition-all duration-700 w-[140px] h-[140px] md:w-[180px] md:h-[180px] ${
+                      hoveredRing === 0 
+                        ? "border-purple-500/60 shadow-[0_0_25px_rgba(168,85,247,0.25)] ring-4 ring-purple-500/5 animate-[spin_20s_linear_infinite]" 
+                        : "border-zinc-200/40 dark:border-white/5 animate-[spin_40s_linear_infinite]"
+                    }`}
+                  >
+                    <div className={`absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full transition-colors duration-500 ${
+                      hoveredRing === 0 ? "bg-purple-400 shadow-[0_0_10px_#a855f7]" : "bg-zinc-400 dark:bg-zinc-700"
+                    }`} />
                   </div>
-                </Reveal>
-              ))}
+
+                  {/* Ring Layer 1: Student Tracking */}
+                  <div 
+                    className={`absolute rounded-full border transition-all duration-700 w-[210px] h-[210px] md:w-[270px] md:h-[270px] ${
+                      hoveredRing === 1 
+                        ? "border-purple-500/60 shadow-[0_0_25px_rgba(168,85,247,0.25)] ring-4 ring-purple-500/5 animate-[spin_15s_linear_infinite_reverse]" 
+                        : "border-zinc-200/40 dark:border-white/5 animate-[spin_35s_linear_infinite_reverse]"
+                    }`}
+                  >
+                    <div className={`absolute top-1/2 -right-1.5 -translate-y-1/2 w-3 h-3 rounded-full transition-colors duration-500 ${
+                      hoveredRing === 1 ? "bg-purple-400 shadow-[0_0_10px_#a855f7]" : "bg-zinc-400 dark:bg-zinc-700"
+                    }`} />
+                  </div>
+
+                  {/* Ring Layer 2: Time Saved */}
+                  <div 
+                    className={`absolute rounded-full border transition-all duration-700 w-[280px] h-[280px] md:w-[360px] md:h-[360px] ${
+                      hoveredRing === 2 
+                        ? "border-purple-500/60 shadow-[0_0_25px_rgba(168,85,247,0.25)] ring-4 ring-purple-500/5 animate-[spin_25s_linear_infinite]" 
+                        : "border-zinc-200/40 dark:border-white/5 animate-[spin_45s_linear_infinite]"
+                    }`}
+                  >
+                    <div className={`absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full transition-colors duration-500 ${
+                      hoveredRing === 2 ? "bg-purple-400 shadow-[0_0_10px_#a855f7]" : "bg-zinc-400 dark:bg-zinc-700"
+                    }`} />
+                  </div>
+
+                  {/* Ring Layer 3: Accuracy Rate */}
+                  <div 
+                    className={`absolute rounded-full border transition-all duration-700 w-[350px] h-[350px] md:w-[450px] md:h-[450px] ${
+                      hoveredRing === 3 
+                        ? "border-purple-500/60 shadow-[0_0_25px_rgba(168,85,247,0.25)] ring-4 ring-purple-500/5 animate-[spin_18s_linear_infinite_reverse]" 
+                        : "border-zinc-200/40 dark:border-white/5 animate-[spin_50s_linear_infinite_reverse]"
+                    }`}
+                  >
+                    <div className={`absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-3 rounded-full transition-colors duration-500 ${
+                      hoveredRing === 3 ? "bg-purple-400 shadow-[0_0_10px_#a855f7]" : "bg-zinc-400 dark:bg-zinc-700"
+                    }`} />
+                  </div>
+
+                </div>
+              </div>
+
             </div>
           </div>
         </section>
