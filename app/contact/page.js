@@ -20,6 +20,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import emailjs from "@emailjs/browser";
+import toast from "react-hot-toast";
 
 export default function Contact() {
   const { theme } = useTheme();
@@ -137,7 +138,9 @@ export default function Contact() {
     setSubmitStatus({
       type: "success",
       message: "Thank you! Your message has been sent successfully.",
+      
     });
+    toast.success("Message sent successfully!");
 
     setFormData({
       name: "",
@@ -164,7 +167,9 @@ export default function Contact() {
     setSubmitStatus({
       type: "error",
       message: "Sorry, something went wrong. Please try again later.",
+     
     });
+     toast.error("Failed to send message");
   } finally {
     setIsSubmitting(false);
   }
