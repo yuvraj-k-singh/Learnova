@@ -313,8 +313,6 @@ const LearnovaChatbot = () => {
 
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
-  
-  const t = isDarkMode ? themeStyles.dark : themeStyles.light;
 
   useEffect(() => {
     setMessages([
@@ -417,7 +415,7 @@ const LearnovaChatbot = () => {
   // ---------------------------------------------------------------------------
   // Theme tokens
   // ---------------------------------------------------------------------------
-  const t = {
+  const themeTokens = {
     bg: isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900",
     header: "bg-gradient-to-r from-purple-700 via-blue-700 to-indigo-700",
     border: isDarkMode ? "border-gray-700" : "border-gray-200",
@@ -469,12 +467,12 @@ const LearnovaChatbot = () => {
   // ---------------------------------------------------------------------------
   return (
     <div
-      className={`fixed bottom-6 right-6 z-50 flex flex-col ${t.bg} rounded-xl shadow-2xl transition-all duration-300 border ${t.border} ${
+      className={`fixed bottom-6 right-6 z-50 flex flex-col ${themeTokens.bg} rounded-xl shadow-2xl transition-all duration-300 border ${themeTokens.border}} ${
         isMinimized ? "w-72 h-16 overflow-hidden" : "w-96 h-[660px]"
       }`}
     >
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className={`${t.header} text-white p-4 rounded-t-xl flex items-center justify-between shrink-0`}>
+      <div className={`${themeTokens.header} text-white p-4 rounded-t-xl flex items-center justify-between shrink-0`}>
         <div className="flex items-center space-x-3">
           <div className="relative">
             <Bot className="text-yellow-300" size={22} />
@@ -508,14 +506,14 @@ const LearnovaChatbot = () => {
       {!isMinimized && (
         <>
           {/* ── Category Tabs ────────────────────────────────────────────── */}
-          <div className={`p-2 border-b ${t.border} shrink-0`}>
+          <div className={`p-2 border-b ${themeTokens.border} shrink-0`}>
             <div className="flex space-x-1 overflow-x-auto scrollbar-none">
               {categories.map(({ id, label, icon: Icon }) => (
                 <button
                   key={id}
                   onClick={() => setCurrentCategory(id)}
                   className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs transition-all whitespace-nowrap ${
-                    currentCategory === id ? t.catBtnActive : t.catBtn
+                    currentCategory === id ? themeTokens.catBtnActive : themeTokens.catBtn
                   }`}
                 >
                   <Icon size={12} />
@@ -534,12 +532,12 @@ const LearnovaChatbot = () => {
               >
                 <div className={`flex max-w-[85%] items-end gap-2 ${message.isBot ? "flex-row" : "flex-row-reverse"}`}>
                   {/* Avatar */}
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${message.isBot ? t.botAvatar : t.userAvatar}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${message.isBot ? themeTokens.botAvatar : themeTokens.userAvatar}`}>
                     {message.isBot ? <Bot size={16} /> : <User size={16} />}
                   </div>
 
                   {/* Bubble */}
-                  <div className={`px-4 py-3 rounded-2xl shadow-sm ${message.isBot ? t.botMsg : t.userMsg}`}>
+                  <div className={`px-4 py-3 rounded-2xl shadow-sm ${message.isBot ? themeTokens.botMsg : themeTokens.userMsg}`}>
                     {message.isBot ? (
                       <ReactMarkdown components={markdownComponents}>
                         {message.text}
@@ -571,7 +569,7 @@ const LearnovaChatbot = () => {
                   <button
                     key={i}
                     onClick={() => handleSendMessage(q)}
-                    className={`w-full text-left text-xs px-3 py-2 rounded-lg transition-all duration-200 hover:scale-[1.01] ${t.suggestion}`}
+                    className={`w-full text-left text-xs px-3 py-2 rounded-lg transition-all duration-200 hover:scale-[1.01] ${themeTokens.suggestion}`}
                   >
                     {q}
                   </button>
@@ -582,10 +580,10 @@ const LearnovaChatbot = () => {
             {/* Loading indicator */}
             {isLoading && (
               <div className="flex justify-start items-end gap-2 animate-fadeIn">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${t.botAvatar}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${themeTokens.botAvatar}`}>
                   <Bot size={16} />
                 </div>
-                <div className={`${t.loading} border rounded-2xl px-4 py-3 shadow-sm`}>
+                <div className={`${themeTokens.loading} border rounded-2xl px-4 py-3 shadow-sm`}>
                    <div className="flex items-center space-x-1 px-1 py-1">     
                       <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
                       <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
@@ -599,7 +597,7 @@ const LearnovaChatbot = () => {
           </div>
 
           {/* ── Quick Contact Bar ─────────────────────────────────────────── */}
-          <div className={`px-4 py-2 border-t ${t.border} shrink-0`}>
+          <div className={`px-4 py-2 border-t ${themeTokens.border} shrink-0`}>
             <div className="flex items-center justify-center space-x-4 text-xs">
               <a
                 href={`mailto:${CONTACT_INFO.email}`}
@@ -628,7 +626,7 @@ const LearnovaChatbot = () => {
           </div>
 
           {/* ── Input ─────────────────────────────────────────────────────── */}
-          <div className={`p-4 border-t ${t.border} shrink-0`}>
+          <div className="p-4 border-t ${themeTokens.border} shrink-0">
             <div className="flex items-end gap-3">
               <textarea
                 ref={textareaRef}
@@ -638,7 +636,7 @@ const LearnovaChatbot = () => {
                 disabled={isLoading}
                 placeholder="Ask Nova about Learnova…"
                 rows={1}
-                className={`flex-1 px-4 py-3 border rounded-xl resize-none focus:outline-none focus:ring-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm ${t.input}`}
+              className={`flex-1 px-4 py-3 border rounded-xl resize-none focus:outline-none focus:ring-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm ${themeTokens.input}`}  
                 style={{ minHeight: "48px", maxHeight: "120px" }}
               />
               <button
