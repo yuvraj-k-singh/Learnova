@@ -14,6 +14,10 @@ jest.mock("@/lib/firebase-admin", () => ({
   getUserProfile: jest.fn(),
 }));
 
+jest.mock("@/lib/gamification-service", () => ({
+  awardXp: jest.fn().mockResolvedValue({ xpAwarded: 50, newLevel: null })
+}));
+
 jest.mock("firebase-admin/firestore", () => ({
   getFirestore: jest.fn(),
   FieldValue: {
