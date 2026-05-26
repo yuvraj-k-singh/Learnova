@@ -20,6 +20,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import emailjs from "@emailjs/browser";
+import toast from "react-hot-toast";
 
 export default function Contact() {
   const { theme } = useTheme();
@@ -39,6 +40,7 @@ export default function Contact() {
   const [cooldownTimer, setCooldownTimer] = useState(0);
 
   useEffect(() => {
+    let interval; // Store interval reference securely
     const COOLDOWN_MS = 60 * 1000;
     const lastSubmit = localStorage.getItem('learnova_contact_last_submit');
     if (lastSubmit) {
@@ -47,7 +49,7 @@ export default function Contact() {
       if (remaining > 0) {
         setCooldown(true);
         setCooldownTimer(remaining);
-        const interval = setInterval(() => {
+        interval = setInterval(() => {
           setCooldownTimer((prev) => {
             if (prev <= 1) {
               clearInterval(interval);
@@ -59,6 +61,11 @@ export default function Contact() {
         }, 1000);
       }
     }
+    
+    // CRITICAL FIX: Cleanup function to destroy the interval on component unmount
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, []);
 
   const handleInputChange = (e) => {
@@ -131,7 +138,9 @@ export default function Contact() {
     setSubmitStatus({
       type: "success",
       message: "Thank you! Your message has been sent successfully.",
+      
     });
+    toast.success("Message sent successfully!");
 
     setFormData({
       name: "",
@@ -158,7 +167,9 @@ export default function Contact() {
     setSubmitStatus({
       type: "error",
       message: "Sorry, something went wrong. Please try again later.",
+     
     });
+     toast.error("Failed to send message");
   } finally {
     setIsSubmitting(false);
   }
@@ -268,7 +279,7 @@ export default function Contact() {
             <div className="grid lg:grid-cols-2 gap-16">
               {/* Contact Form */}
               <div className="relative">
-                <div className="bg-card backdrop-blur-xl rounded-3xl p-8 border border-border hover:border-accent/30 transition-all duration-500">
+                <div className="bg-card backdrop-blur-xl rounded-3xl p-8 border border-border hover:border-accent/30 transition-border duration-500">
                   <div className="mb-8">
                     <h2 className="text-3xl font-bold text-foreground mb-4">
                       Send us a Message
@@ -282,16 +293,17 @@ export default function Contact() {
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <label className="block text-foreground font-medium">
+                        <label htmlFor="contact-name" className="block text-foreground font-medium">
                           Full Name *
                         </label>
                         <input
+                          id="contact-name"
                           type="text"
                           name="name"
                           value={formData.name}
                           onChange={handleInputChange}
                           placeholder="Enter your full name"
-                          className="w-full p-4 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent/50 transition-all duration-300"
+                          className="w-full p-4 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent/50 transition-colors duration-300"
                         />
                         {errors.name && (
                           <p className="text-red-400 text-sm mt-1">
@@ -301,16 +313,17 @@ export default function Contact() {
                       </div>
 
                       <div className="space-y-2">
-                        <label className="block text-foreground font-medium">
+                        <label htmlFor="contact-email" className="block text-foreground font-medium">
                           Email Address *
                         </label>
                         <input
+                          id="contact-email"
                           type="email"
                           name="email"
                           value={formData.email}
                           onChange={handleInputChange}
                           placeholder="you@example.com"
-                          className="w-full p-4 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent/50 transition-all duration-300"
+                          className="w-full p-4 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent/50 transition-colors duration-300"
                         />
                         {errors.email && (
                           <p className="text-red-400 text-sm mt-1">
@@ -321,30 +334,32 @@ export default function Contact() {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="block text-foreground font-medium">
+                      <label htmlFor="contact-company" className="block text-foreground font-medium">
                         Institution/Company
                       </label>
                       <input
+                        id="contact-company"
                         type="text"
                         name="company"
                         value={formData.company}
                         onChange={handleInputChange}
                         placeholder="Your institution or company name"
-                        className="w-full p-4 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent/50 transition-all duration-300"
+                        className="w-full p-4 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent/50 transition-colors duration-300"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <label className="block text-foreground font-medium">
+                      <label htmlFor="contact-message" className="block text-foreground font-medium">
                         Message *
                       </label>
                       <textarea
+                        id="contact-message"
                         name="message"
                         value={formData.message}
                         onChange={handleInputChange}
                         rows="5"
                         placeholder="Tell us about your needs and how we can help..."
-                        className="w-full p-4 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent/50 transition-all duration-300 resize-none"
+                        className="w-full p-4 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent/50 transition-colors duration-300 resize-none"
                       />
                       {errors.message && (
                         <p className="text-red-400 text-sm mt-1">
@@ -373,7 +388,7 @@ export default function Contact() {
                     <button
                       type="submit"
                       disabled={isSubmitting || cooldown}
-                      className="group w-full bg-gradient-to-r from-accent to-purple-500 text-white py-4 px-6 rounded-xl font-semibold hover:shadow-xl hover:shadow-accent/25 transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                      className="group w-full bg-gradient-to-r from-accent to-purple-500 text-white py-4 px-6 rounded-xl font-semibold hover:shadow-xl hover:shadow-accent/25 transition-transform duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                     >
                       {isSubmitting ? (
                         <>
@@ -483,7 +498,7 @@ export default function Contact() {
                       <Link
                         key={index}
                         href={social.href}
-                        className={`w-12 h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center text-muted-foreground ${social.color} transition-all duration-300 hover:scale-110 hover:border-current`}
+                        className={`w-12 h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center text-muted-foreground ${social.color} transition-transform duration-300 hover:scale-110 hover:border-current`}
                       >
                         <social.icon className="w-6 h-6" />
                       </Link>

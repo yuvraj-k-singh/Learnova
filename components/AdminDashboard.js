@@ -28,6 +28,9 @@ import ChartSkeleton from "@/components/ui/ChartSkeleton";
 import DashboardSkeleton from "@/components/ui/DashboardSkeleton";
 import SkeletonCard from "@/components/ui/SkeletonCard";
 
+// CRITICAL FIX: Imported missing useAuth hook to prevent ReferenceError crash
+import { useAuth } from "@/hooks/useAuth";
+
 const AttendanceTrendsChart = dynamic(
   () => import("@/components/charts/AttendanceTrendsChart"),
   { ssr: false, loading: () => <ChartSkeleton variant="chart" /> }
@@ -65,12 +68,20 @@ const SuperAdminDashboard = () => {
 
   useEffect(() => {
     if (!user) return;
+
+    const controller = new AbortController();
+    let isActive = true;
+
     const fetchStats = async () => {
       try {
         const token = await user.getIdToken();
         const res = await fetch("/api/admin/stats", {
           headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
         });
+
+        if (!isActive) return;
+
         if (res.ok) {
           const data = await res.json();
           if (data.platformStats) setPlatformStats(data.platformStats);
@@ -82,12 +93,21 @@ const SuperAdminDashboard = () => {
           console.error("Failed to fetch admin stats:", res.status);
         }
       } catch (err) {
+        if (err.name === "AbortError") return;
         console.error("Error fetching admin stats:", err);
       } finally {
-        setLoading(false);
+        if (isActive) {
+          setLoading(false);
+        }
       }
     };
+
     fetchStats();
+
+    return () => {
+      isActive = false;
+      controller.abort();
+    };
   }, [user]);
 
   const renderOverview = () => (
