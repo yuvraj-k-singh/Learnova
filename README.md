@@ -174,7 +174,13 @@ npm install
 
 ### 3. Configure environment variables
 
-Create a `.env.local` file in the root directory and add your credentials:
+A `.env.example` file is included in the repo with all required keys. Copy it first:
+
+```bash
+cp .env.example .env.local
+```
+
+Then fill in your actual values:
 
 ```env
 # Firebase
