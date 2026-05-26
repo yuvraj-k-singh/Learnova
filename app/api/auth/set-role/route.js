@@ -61,7 +61,7 @@ export const POST = withErrorHandler(async (request) => {
   await db
     .collection("users")
     .doc(decodedToken.uid)
-    .set(userProfile);
+    .set(userProfile, { merge: true });
 
   return jsonSuccess({ userProfile }, 201);
 });
